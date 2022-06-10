@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+  <body>
+    <h1>Google Sheets Email Forwarding</h1>
+
+    <table id='todayAttTable'>
+      <? for (var i = 0; i < todayAtt.length; i++) { ?>
+        <tr>
+          <? for (var j = 0; j < todayAtt[i].length; j++) { ?>
+            <td><?= todayAtt[i][j] ?></td>
+          <? } ?>
+          
+          <? if(i != 0) { ?>
+            <td><input class="attCheckbox" type='checkbox'></td>
+          <? } ?>
+        </tr>
+      <? } ?>
+    </table>
+
+    <button id="submitButton">Submit</button>
+    <!-- <script src="Code.gs"></script> -->
+  </body>
+  <script>
+    var checkboxes = document.getElementsByClassName('attCheckbox');
+    for(var i = 0; i < checkboxes.length; i++) {
+      var textNode = document.createTextNode(checkboxes[i].checked);
+      document.body.appendChild(textNode);
+    }
+
+    document.getElementById('submitButton').addEventListener('click', function() {
+      var table = document.getElementById("todayAttTable");
+      var absentees = [];
+      for(var i = 0; i < checkboxes.length; i++) {
+        if(checkboxes[i].checked) {
+          var row = table.rows[i + 1];
+          //TODO: untested
+          absentees.push({name: row.cells[0].innerText, period: row.cells[1].innerText});
+          checkboxes[i].checked = false;
+        }
+      }
+      google.script.run.websiteSendEmails(absentees);
+    });
+  </script>
+</html>
+
