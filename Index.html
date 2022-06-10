@@ -19,26 +19,51 @@
     </table>
 
     <button id="submitButton">Submit</button>
+
+    <table id='pastAttTable'>
+      <? for (var i = 0; i < pastAtt.length; i++) { ?>
+        <tr>
+          <? for (var j = 0; j < pastAtt[i].length; j++) { ?>
+            <td><?= pastAtt[i][j] ?></td>
+          <? } ?>
+        </tr>
+      <? } ?>
+    </table>
+
     <!-- <script src="Code.gs"></script> -->
   </body>
   <script>
     var checkboxes = document.getElementsByClassName('attCheckbox');
-    for(var i = 0; i < checkboxes.length; i++) {
-      var textNode = document.createTextNode(checkboxes[i].checked);
-      document.body.appendChild(textNode);
-    }
-
+    
     document.getElementById('submitButton').addEventListener('click', function() {
-      var table = document.getElementById("todayAttTable");
+
+      var todayTable = document.getElementById("todayAttTable");
+      var pastTable = document.getElementById("pastAttTable");
       var absentees = [];
       for(var i = 0; i < checkboxes.length; i++) {
+        var row = todayTable.rows[i + 1];
         if(checkboxes[i].checked) {
-          var row = table.rows[i + 1];
-          //TODO: untested
-          absentees.push({name: row.cells[0].innerText, period: row.cells[1].innerText});
-          checkboxes[i].checked = false;
+          absentees.push({rowNum: i, name: row.cells[1].innerText, period: row.cells[2].innerText});
         }
+        
+        var pastTableRow = document.createElement("tr");
+        
+        for(var j = 0; j < row.cells.length; j++) {
+          var pastTableCell = document.createElement("td");
+          var textNode = document.createTextNode(row.cells[j].innerText);
+          pastTableCell.appendChild(textNode);
+          pastTableRow.appendChild(pastTableCell);
+        }
+        var pastTableCell = document.createElement("td");
+        var textNode = document.createTextNode(checkboxes[i].checked);
+        pastTableCell.appendChild(textNode);
+        pastTableRow.appendChild(pastTableCell);
+
+        pastTable.appendChild(pastTableRow);
+        
+        checkboxes[i].checked = false;
       }
+
       google.script.run.websiteSendEmails(absentees);
     });
   </script>

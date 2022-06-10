@@ -101,8 +101,6 @@ function errorEmailTeacher(allErrors, tEmailSheetPresent) {
       "developer " + CREATOR_NAME + " at " + CREATOR_EMAIL + ".";
   
   if(!tEmailSheetPresent) {
-    //TODO: remove
-    console.log("email error");
     MailApp.sendEmail(sheet.getOwner().getEmail(), "Google Sheets Email Forwarding Failed", message);
     return;
   }
@@ -169,7 +167,7 @@ function checkAttendance() {
         'period': period,
         'emailAddress': emailAddress,
         'className': className
-    }
+    };
     storedRows.push(currentRow);
 
     rowNum++;
