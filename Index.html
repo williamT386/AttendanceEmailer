@@ -48,7 +48,7 @@
         
         var pastTableRow = document.createElement("tr");
         
-        for(var j = 0; j < row.cells.length; j++) {
+        for(var j = 0; j < row.cells.length - 1; j++) {
           var pastTableCell = document.createElement("td");
           var textNode = document.createTextNode(row.cells[j].innerText);
           pastTableCell.appendChild(textNode);
