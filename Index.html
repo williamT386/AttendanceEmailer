@@ -3,15 +3,21 @@
 
   <body>
     <h1>Google Sheets Email Forwarding</h1>
-
+    <h3 id="todayDate">Today's date: <?= todayDate ?></h3>
     <table id='todayAttTable'>
       <? for (var i = 0; i < todayAtt.length; i++) { ?>
         <tr>
           <? for (var j = 0; j < todayAtt[i].length; j++) { ?>
-            <td><?= todayAtt[i][j] ?></td>
+            <? if(i == 0) { ?>
+              <td><b><?= todayAtt[i][j] ?><b></td>
+            <? } else { ?>
+              <td><?= todayAtt[i][j] ?></td>
+            <? } ?>
           <? } ?>
           
-          <? if(i != 0) { ?>
+          <? if(i == 0) { ?>
+            <td><text><b>Check if absent<b></text><td>
+          <? } else { ?>
             <td><input class="attCheckbox" type='checkbox'></td>
           <? } ?>
         </tr>
@@ -24,47 +30,104 @@
       <? for (var i = 0; i < pastAtt.length; i++) { ?>
         <tr>
           <? for (var j = 0; j < pastAtt[i].length; j++) { ?>
-            <td><?= pastAtt[i][j] ?></td>
+            <? if(i == 0) { ?>
+              <td><b><?= pastAtt[i][j] ?><b></td>
+            <? } else { ?>
+              <td><?= pastAtt[i][j] ?></td>
+            <? } ?>
           <? } ?>
         </tr>
       <? } ?>
     </table>
 
-    <!-- <script src="Code.gs"></script> -->
   </body>
   <script>
     var checkboxes = document.getElementsByClassName('attCheckbox');
-    
-    document.getElementById('submitButton').addEventListener('click', function() {
 
+    document.getElementById('submitButton').addEventListener('click', function() {
       var todayTable = document.getElementById("todayAttTable");
       var pastTable = document.getElementById("pastAttTable");
+
+      const NAME_COL = 0;
+      const PERIOD_COL = 1;
+      const CLASS_NAME_COL = 2;
       var absentees = [];
       for(var i = 0; i < checkboxes.length; i++) {
         var row = todayTable.rows[i + 1];
-        if(checkboxes[i].checked) {
-          absentees.push({rowNum: i, name: row.cells[1].innerText, period: row.cells[2].innerText});
-        }
-        
-        var pastTableRow = document.createElement("tr");
-        
-        for(var j = 0; j < row.cells.length - 1; j++) {
-          var pastTableCell = document.createElement("td");
-          var textNode = document.createTextNode(row.cells[j].innerText);
-          pastTableCell.appendChild(textNode);
-          pastTableRow.appendChild(pastTableCell);
-        }
-        var pastTableCell = document.createElement("td");
-        var textNode = document.createTextNode(checkboxes[i].checked);
-        pastTableCell.appendChild(textNode);
-        pastTableRow.appendChild(pastTableCell);
+        absentees.push([row.cells[NAME_COL].innerText, row.cells[PERIOD_COL].innerText, row.cells[CLASS_NAME_COL].innerText, checkboxes[i].checked]);
+      }
+      
+      function setNewData(returned) {
+        var newTodayDate = returned[0];
+        var newPastAttData = returned[1];
+        var newTodayAttData = returned[2];
+        var todayDate = document.getElementById("todayDate");
+        todayDate.innerText = "Today's date: " + newTodayDate;
 
-        pastTable.appendChild(pastTableRow);
-        
-        checkboxes[i].checked = false;
+        for(var i = 0; i < newPastAttData.length; i++) {
+          var pastTableRow = document.createElement("tr");
+          for(var j = 2; j < newPastAttData[i].length; j++) {
+            var pastTableCell = document.createElement("td");
+            var textNode = document.createTextNode(newPastAttData[i][j]);
+            pastTableCell.appendChild(textNode);
+            pastTableRow.appendChild(pastTableCell);
+          }
+          pastTable.appendChild(pastTableRow);
+        }
+
+        var tableSlots = todayTable.rows.length - 1;
+        if(newTodayAttData.length < tableSlots) {
+          for(var count = newTodayAttData.length; count < tableSlots; count++) {
+            todayTable.deleteRow(count);
+          }
+        }
+        else if(newTodayAttData.length > tableSlots) {
+          for(var count = 0; count < newTodayAttData.length - tableSlots; count++) {
+            var todayTableRow = document.createElement("tr");
+            for(var i = 0; i < todayTable.rows[1].cells.length; i++) {
+              var todayTableCell = document.createElement("td");
+              if(i == todayTable.rows[1].cells.length - 1) {
+                var todayCheckbox = document.createElement("INPUT");
+                todayCheckbox.setAttribute("type", "checkbox");
+                todayCheckbox.className = "attCheckbox";
+                todayTableCell.appendChild(todayCheckbox);
+              }
+              else {
+                var textNode = document.createTextNode("");
+                todayTableCell.appendChild(textNode);
+              }
+              todayTableRow.appendChild(todayTableCell);
+            }
+            todayTable.appendChild(todayTableRow);
+          }
+        }
+
+        var rowNum = 0;
+        for (let i in todayTable.rows) {
+          let row = todayTable.rows[i];
+          
+          if(i == 0) {
+            continue;
+          }
+          
+          var colNum = 0;
+          for (let j in row.cells) {
+            let col = row.cells[j];
+            if(j != row.cells.length - 1) {
+              col.innerText = newTodayAttData[rowNum][colNum];
+            }
+            
+            colNum++;
+          }
+          rowNum++;
+        }
       }
 
-      google.script.run.websiteSendEmails(absentees);
+      google.script.run.withSuccessHandler(setNewData).newWebsiteSendEmails(absentees);
+
+      for(var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = false;
+      }
     });
   </script>
 </html>

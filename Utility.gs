@@ -29,58 +29,15 @@ function getDataValues(sheetName, range) {
 }
 
 /**
- * Checks if all the required sheets present in this spreadsheet.
- * @returns true if all required sheets are present
- * @throws [all the generated errors, whether the Teacher Email sheet is present]
- */
-function allSheetsPresent() {
-  var currentSheets = new Set(sheet.getSheets());
-  var currentNames = new Set();
-  for(var current of currentSheets)
-    currentNames.add(current.getName());
-
-  var tEmailSheetPresent = true;
-  var allErrors = new Set();
-  for(var required of REQUIRED_SHEETS) {
-    if(!currentNames.has(required)) {
-      allErrors.add("The sheet with the name " + required + " is required and is missing in the spreadsheet. Please put it back.");
-      if(required == TEACHER_EMAIL)
-        tEmailSheetPresent = false;
-    }
-    else if(required == TEACHER_EMAIL && (getData(TEACHER_EMAIL, "A2").isBlank() || getData(TEACHER_EMAIL, "B2").isBlank())) {
-      allErrors.add("The sheet with the name " + TEACHER_EMAIL + " is missing a complete row. Please add a filled row of data.");
-      tEmailSheetPresent = false;
-      console.log("should be false");
-    }
-  }
-
-  if(allErrors.size != 0)
-    throw [allErrors, tEmailSheetPresent];
-
-  return true;
-}
-
-/**
- * Normally, add 24 hours.
- * Add 23 hours on second Sunday of March for Daylights savings.
- * Add 25 hours on first Sunday of November for Daylights savings.
- * @param listedDate the date listed in the `Date` column of the ATTENDANCE sheet
- * @return 1 day after the listedDate
+ * Adds 1 day to the given date and returns the result
+ * @param listedDate the given date
+ * @result the given date + 1 day
  */
 function addTime(listedDate) {
-  if(Utilities.formatDate(listedDate, "PST", "EEEE") != "Sunday")
-    return new Date(listedDate.getTime() + MILLIS_PER_HOUR * NUM_HOURS_DAY);
-
-  var month = parseInt(Utilities.formatDate(listedDate, "PST", "M"));
-  var day = parseInt(Utilities.formatDate(listedDate, "PST", "d"));
-  if(month == 11) {
-    if(day <= 7)
-      return new Date(listedDate.getTime() + MILLIS_PER_HOUR * (NUM_HOURS_DAY + 1));
-  }
-  else if(month == 3) {
-    if(day >= 8 && day <= 14)
-      return new Date(listedDate.getTime() + MILLIS_PER_HOUR * (NUM_HOURS_DAY - 1));
-  }
+  var testDate = new Date(listedDate);
+  var secondDate = new Date(listedDate);
+  secondDate.setDate(testDate.getDate()+1);
+  return secondDate;
 }
 
 /**
@@ -97,12 +54,10 @@ function formatDate(date) {
  * Adapted from https://www.googlecloudcommunity.com/gc/Tips-Tricks/How-to-delete-blank-rows-in-Google-Sheets/m-p/383137.
  */
 function deleteBlankRows() {
-  // Get sheets
-  var allSheets = sheet.getSheets();
-  
-  // Loop through allSheets. Delete blank rows in each sheet.
-  for (var s = 0; s < allSheets.length; s++) {
-    var currentSheet = allSheets[s];
+  // Loop through ALL_SHEETS. Delete blank rows in each sheet.
+  for (var s = 0; s < ALL_SHEET_NAMES.length; s++) {
+    var currentSheetName = ALL_SHEET_NAMES[s];
+    var currentSheet = sheet.getSheetByName(currentSheetName);
     var searchDataRange = currentSheet.getRange(1,1,currentSheet.getMaxRows(),currentSheet.getMaxColumns());
     var searchValues = searchDataRange.getValues();
     var numRows = searchValues.length;
@@ -112,15 +67,10 @@ function deleteBlankRows() {
     var prevDelRow = -2;
     var rowClear = false;
     
-    if(currentSheet.getName() == ATTENDANCE || currentSheet.getName() == PAST_ATTENDANCE)
-      var colMax = numCols - 1;
-    else
-      var colMax = numCols;
-
     // Loop through Rows in this sheet
     for (var r = 0; r < numRows; r++) {
       // Loop through columns in this row
-      for (var c = 0; c < colMax; c++) {
+      for (var c = 0; c < numCols; c++) {
         if (searchValues[r][c].toString().trim() === "") {
           rowClear = true;
         } else {
@@ -159,3 +109,4 @@ function deleteBlankRows() {
     }
   }
 }
+

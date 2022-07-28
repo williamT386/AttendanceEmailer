@@ -1,17 +1,15 @@
 function doGet(e) {
-  var template = HtmlService.createTemplateFromFile('Index.html');
   deleteBlankRows();
-  template.todayAtt = getDataValues("Attendance", "A:C");
-  for(var i = 1; i < template.todayAtt.length; i++) {
-    var formattedDate = formatDate(getDataValue("Attendance", "A" + (i + 1)));
-    template.todayAtt[i][0] = formattedDate;
-  }
 
-  template.pastAtt = getDataValues("Past Attendance", "A:D");
-  for(var i = 1; i < template.pastAtt.length; i++) {
-    formattedDate = formatDate(getDataValue("Past Attendance", "A" + (i + 1)));
-    template.pastAtt[i][0] = formattedDate;
-  }
+  var studentInfoSheet = sheet.getSheetByName(STUDENT_INFO);
+  //sorts by period number
+  studentInfoSheet.getRange("A2:E" + studentInfoSheet.getLastRow()).sort(4);
+  
+  var template = HtmlService.createTemplateFromFile('Index.html');
+  template.todayDate = formatDate(getDataValue(DATE, "A1"))
+  template.todayAtt = getDataValues(STUDENT_INFO, "C:E");
+  template.pastAtt = getDataValues(PAST_ATTENDANCE, "C:F");
+
   return template.evaluate();
 }
 
@@ -75,4 +73,85 @@ function isAbsent(absentees, rowNum) {
       return true;
   }
   return false;
+}
+
+function newWebsiteSendEmails(absentees) {
+  //put all studentInfo into an array
+  var studentInfoSheet = sheet.getSheetByName(STUDENT_INFO);
+  var newTodayAttData = [];
+  var errors = "";
+  var valid = true;
+  for(var i = 2; i < studentInfoSheet.getMaxRows() + 1; i++) {
+    var curStudentValues = studentInfoSheet.getRange("B" + i + ":E" + i).getValues();
+    // check for blanks
+    for(var j = 0; j < curStudentValues[0].length; j++) {
+      if(curStudentValues[0][j] === "") {
+        errors += 'Empty cell at ' + String.fromCharCode('B'.charCodeAt(0) + j) + i + "\n";
+        valid = false;
+      }
+    }
+    newTodayAttData.push([curStudentValues[0][1], curStudentValues[0][2], curStudentValues[0][3], curStudentValues[0][0]]);
+  }
+  
+  if(!valid) {
+    MailApp.sendEmail(sheet.getOwner().getEmail(), "Google Sheets Email Forwarding Failed", errors);
+    return null;
+  }
+
+  //set up new time
+  var listedDate = getDataValue(DATE, "A1");
+  var newDate = formatDate(addTime(formatDate(listedDate)));
+  getData(DATE, "A1").setValue(newDate);
+  //add to the past attendance table
+  var pastAttSheet = sheet.getSheetByName(PAST_ATTENDANCE);
+  var rowMoveTo = pastAttSheet.getMaxRows() + 1;
+  // var absenteeIndex = 0;
+  var newPastAttData = [];
+  for(var i = 0; i < newTodayAttData.length; i++) {
+    var curRow = newTodayAttData[i];
+    for(var j = 0; j < absentees.length; j++) {
+      var curAbsenteeRow = absentees[j];
+      if(curRow[0] == curAbsenteeRow[0] && curRow[1] == curAbsenteeRow[1] && curRow[2] == curAbsenteeRow[2]) {
+        // moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow);
+        newPastAttData.push(moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow));
+        rowMoveTo++;
+        
+        // MailApp.sendEmail("williamtang.basis@gmail.com", curAbsenteeRow[3], curAbsenteeRow[3]);
+        if(curAbsenteeRow[3])
+          sendEmail(listedDate, curRow);
+      }
+    }
+  }
+
+  var toReturn = [newDate, newPastAttData, newTodayAttData];
+  MailApp.sendEmail("williamtang.basis@gmail.com", "returning", "returning");
+  // return 5;
+  return toReturn;
+}
+
+function moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow) {
+  const DATE_COL = 0;
+  const EMAIL_ADDRESS_COL = 1;
+  const NAME_COL = 2;
+  const PERIOD_COL = 3;
+  const CLASS_NAME_COL = 4;
+  const ABSENT_COL = 5;
+  
+  var range = getData(PAST_ATTENDANCE, "A" + rowMoveTo + ":F" + rowMoveTo);
+  var values = range.getValues();
+  values[0][DATE_COL] = formatDate(listedDate);
+  values[0][EMAIL_ADDRESS_COL] = curRow[3];
+  values[0][NAME_COL] = curRow[0];
+  values[0][PERIOD_COL] = curRow[1];
+  values[0][CLASS_NAME_COL] = curRow[2];
+  values[0][ABSENT_COL] = curAbsenteeRow[3];
+  range.setValues(values);
+  return [...values[0]];
+}
+
+function sendEmail(listedDate, curRow) {
+  listedDate = formatDate(listedDate);
+  var subject = curRow[0] + ": Your Attendance in " + curRow[2] + " P" + curRow[1];
+  var message = "You were marked absent today, " + listedDate + ", in " + curRow[2] + " P" + curRow[1] + ".";
+  MailApp.sendEmail(curRow[3], subject, message);
 }
