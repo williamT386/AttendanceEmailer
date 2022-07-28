@@ -4,6 +4,7 @@
   <body>
     <h1>Google Sheets Email Forwarding</h1>
     <h3 id="todayDate">Today's date: <?= todayDate ?></h3>
+    <!-- Display attendance options for today -->
     <table id='todayAttTable'>
       <? for (var i = 0; i < todayAtt.length; i++) { ?>
         <tr>
@@ -26,6 +27,7 @@
 
     <button id="submitButton">Submit</button>
 
+    <!-- Display previous attendance -->
     <table id='pastAttTable'>
       <? for (var i = 0; i < pastAtt.length; i++) { ?>
         <tr>
@@ -48,13 +50,14 @@
       var todayTable = document.getElementById("todayAttTable");
       var pastTable = document.getElementById("pastAttTable");
 
+      //store all attendance info
       const NAME_COL = 0;
       const PERIOD_COL = 1;
       const CLASS_NAME_COL = 2;
-      var absentees = [];
+      var todayPerformance = [];
       for(var i = 0; i < checkboxes.length; i++) {
         var row = todayTable.rows[i + 1];
-        absentees.push([row.cells[NAME_COL].innerText, row.cells[PERIOD_COL].innerText, row.cells[CLASS_NAME_COL].innerText, checkboxes[i].checked]);
+        todayPerformance.push([row.cells[NAME_COL].innerText, row.cells[PERIOD_COL].innerText, row.cells[CLASS_NAME_COL].innerText, checkboxes[i].checked]);
       }
       
       function setNewData(returned) {
@@ -62,19 +65,27 @@
         var newPastAttData = returned[1];
         var newTodayAttData = returned[2];
         var todayDate = document.getElementById("todayDate");
+        //set the new date for today
         todayDate.innerText = "Today's date: " + newTodayDate;
 
+        //append the new attendance data to the past attendance table
         for(var i = 0; i < newPastAttData.length; i++) {
           var pastTableRow = document.createElement("tr");
-          for(var j = 2; j < newPastAttData[i].length; j++) {
+          for(var j = 0; j < newPastAttData[i].length - 1; j++) {
             var pastTableCell = document.createElement("td");
-            var textNode = document.createTextNode(newPastAttData[i][j]);
+            if(j == newPastAttData[i].length - 2) {
+              var textNode = document.createTextNode(("" + newPastAttData[i][j]).toUpperCase());
+            }
+            else {
+              var textNode = document.createTextNode(newPastAttData[i][j]);
+            }
             pastTableCell.appendChild(textNode);
             pastTableRow.appendChild(pastTableCell);
           }
           pastTable.appendChild(pastTableRow);
         }
 
+        //add or remove rows to today's table to match the number of current students
         var tableSlots = todayTable.rows.length - 1;
         if(newTodayAttData.length < tableSlots) {
           for(var count = newTodayAttData.length; count < tableSlots; count++) {
@@ -102,6 +113,7 @@
           }
         }
 
+        //put the current students into today's table
         var rowNum = 0;
         for (let i in todayTable.rows) {
           let row = todayTable.rows[i];
@@ -123,8 +135,9 @@
         }
       }
 
-      google.script.run.withSuccessHandler(setNewData).newWebsiteSendEmails(absentees);
+      google.script.run.withSuccessHandler(setNewData).newWebsiteSendEmails(todayPerformance);
 
+      //clear all checkboxes
       for(var i = 0; i < checkboxes.length; i++) {
         checkboxes[i].checked = false;
       }

@@ -1,3 +1,8 @@
+/**
+ * Called when the web application is opened and gets today's date, today's attendance, 
+ * and past attendance
+ * @return an HtmlOutput with the information listed above
+ */
 function doGet(e) {
   deleteBlankRows();
 
@@ -8,7 +13,7 @@ function doGet(e) {
   var template = HtmlService.createTemplateFromFile('Index.html');
   template.todayDate = formatDate(getDataValue(DATE, "A1"))
   template.todayAtt = getDataValues(STUDENT_INFO, "C:E");
-  template.pastAtt = getDataValues(PAST_ATTENDANCE, "C:F");
+  template.pastAtt = getData(PAST_ATTENDANCE, "A:E").getDisplayValues();
 
   return template.evaluate();
 }
@@ -47,7 +52,6 @@ function websiteSendEmails(absentees) {
   else {
     for(const row of storedRows) {
       sendEmail(row.name, row.period, row.emailAddress, row.className, listedDate);
-      // moveAttendance(row.rowNum, row.name, row.period, row.attendanceValue, listedDate);
     }
   }
 
@@ -112,7 +116,6 @@ function newWebsiteSendEmails(absentees) {
     for(var j = 0; j < absentees.length; j++) {
       var curAbsenteeRow = absentees[j];
       if(curRow[0] == curAbsenteeRow[0] && curRow[1] == curAbsenteeRow[1] && curRow[2] == curAbsenteeRow[2]) {
-        // moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow);
         newPastAttData.push(moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow));
         rowMoveTo++;
         
@@ -124,27 +127,27 @@ function newWebsiteSendEmails(absentees) {
   }
 
   var toReturn = [newDate, newPastAttData, newTodayAttData];
+  //TODO: remove
   MailApp.sendEmail("williamtang.basis@gmail.com", "returning", "returning");
-  // return 5;
   return toReturn;
 }
 
 function moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow) {
   const DATE_COL = 0;
-  const EMAIL_ADDRESS_COL = 1;
-  const NAME_COL = 2;
-  const PERIOD_COL = 3;
-  const CLASS_NAME_COL = 4;
-  const ABSENT_COL = 5;
+  const NAME_COL = 1;
+  const PERIOD_COL = 2;
+  const CLASS_NAME_COL = 3;
+  const ABSENT_COL = 4;
+  const EMAIL_ADDRESS_COL = 5;
   
   var range = getData(PAST_ATTENDANCE, "A" + rowMoveTo + ":F" + rowMoveTo);
   var values = range.getValues();
   values[0][DATE_COL] = formatDate(listedDate);
-  values[0][EMAIL_ADDRESS_COL] = curRow[3];
   values[0][NAME_COL] = curRow[0];
   values[0][PERIOD_COL] = curRow[1];
   values[0][CLASS_NAME_COL] = curRow[2];
   values[0][ABSENT_COL] = curAbsenteeRow[3];
+  values[0][EMAIL_ADDRESS_COL] = curRow[3];
   range.setValues(values);
   return [...values[0]];
 }
@@ -154,4 +157,114 @@ function sendEmail(listedDate, curRow) {
   var subject = curRow[0] + ": Your Attendance in " + curRow[2] + " P" + curRow[1];
   var message = "You were marked absent today, " + listedDate + ", in " + curRow[2] + " P" + curRow[1] + ".";
   MailApp.sendEmail(curRow[3], subject, message);
+}
+
+/**
+ * Gets the email address for a row of given name and period
+ * @param name the row's name
+ * @period period the row's period
+ * @return the matching email
+ * @throws error message if no matching email
+ */
+function getEmailAddress(name, period) {
+  var rowNum = 2;
+  while(true) {
+    var temp = getData("Email", "A" + rowNum);
+    //no more rows
+    if(temp.isBlank())
+      throw "No matching email for name \"" + name + "\" in period " + period + ".";
+    
+    var cur_name = temp.getValue();
+    var cur_period = getDataValue(EMAIL, "B" + rowNum);
+    if(name == cur_name && period == cur_period) {
+      var emailCell = getData(EMAIL, "C" + rowNum);
+      if(emailCell.isBlank())
+        throw "No matching email for name \"" + name + "\" in period " + period + ".";
+      return emailCell.getValue();
+    }
+    rowNum++;
+  }
+}
+
+/**
+ * Gets the class name for a row of given period
+ * @period period the row's period
+ * @return the matching class name
+ * @throws error message if no matching class name
+ */
+function getClassName(period) {
+  var rowNum = 2;
+  while(true) {
+    var temp = getData(CLASS, "A" + rowNum);
+    //no more rows
+    if(temp.isBlank())
+      throw "No matching class name for period " + period + ".";
+
+    var cur_period = temp.getValue();
+    if(period == cur_period) {
+      var classNameCell = getData(CLASS, "B" + rowNum);
+      if(classNameCell.isBlank())
+        throw "No matching class name for period " + period + ".";
+      return classNameCell.getValue();
+    }
+    rowNum++;
+  }
+}
+
+/**
+ * Emails errors to the teacher.
+ * @param allErrors all the errors stored as a Set
+ * @param tEmailSheetPresent true if the TEACHER_EMAIL sheet exists
+ */
+function errorEmailTeacher(allErrors, tEmailSheetPresent) {
+  var error = "";
+  for(var currentError of allErrors) {
+    error += currentError + "\n";
+  }
+
+  var message = "Errors:\n" + error + ". \nPlease consult the program " +
+      "developer " + CREATOR_NAME + " at " + CREATOR_EMAIL + ".";
+  
+  if(!tEmailSheetPresent) {
+    MailApp.sendEmail(sheet.getOwner().getEmail(), "Google Sheets Email Forwarding Failed", message);
+    return;
+  }
+
+  var rowNum = 2;
+  while(true) {
+    var temp = getData(TEACHER_EMAIL, "B" + rowNum);
+    //no more rows
+    if(temp.isBlank())
+      return;
+
+    var emailAddress = temp.getValue();
+    if(emailAddress != null)
+      MailApp.sendEmail(emailAddress, "Google Sheets Email Forwarding Failed", message);
+    rowNum++;
+  }
+}
+
+/**
+ * Deletes the attendance data for the current row in the ATTENDANCE sheet and appends it to
+ * the PAST_ATTENDANCE sheet
+ * @param row row in ATTENDANCE sheet
+ * @param name name of current row
+ * @param period period of current row
+ * @param attendanceValue true if the current row is absent
+ * @param listedDate the listed date in the ATTENDANCE sheet
+ */
+function moveAttendance(row, name, period, attendanceValue, listedDate) {
+  var range = getData(PAST_ATTENDANCE, "A" + rowMoveTo + ":D" + rowMoveTo);
+  rowMoveTo++;
+  var values = range.getValues();
+  values[0][0] = formatDate(listedDate);
+  values[0][1] = name;
+  values[0][2] = period;
+  values[0][3] = attendanceValue;
+  range.setValues(values);
+
+  var newDate = addTime(listedDate);
+  newDate = formatDate(newDate);
+  getData(ATTENDANCE, "A" + row).setValue(newDate);
+  getData(ATTENDANCE, "D" + row).setValue(false);
 }
