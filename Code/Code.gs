@@ -11,6 +11,23 @@ function doGet(e) {
   
   deleteBlankRows();
 
+  //check for blank cells
+  var studentInfoData = getDataValues(STUDENT_INFO, "B:E");
+  var valid = true;
+  var errors = "";
+  for(var i = 1; i < studentInfoData.length; i++) {
+    for(var j = 0; j < studentInfoData[0].length; j++) {
+      if(studentInfoData[i][j] == "") {
+        errors += 'Empty cell at ' + String.fromCharCode('B'.charCodeAt(0) + j) + (i + 1) + ". Please fill in this cell.\n";
+        valid = false;
+      }
+    }
+  }
+  if(!valid) {
+    MailApp.sendEmail(sheet.getOwner().getEmail(), "Attendance Emailer FAILED", errors);
+    throw new Error("Error loading webpage. Please check your email.");
+  }
+
   var template = HtmlService.createTemplateFromFile('Index.html');
   template.todayDate = formatDate(getDataValue(DATE, "A1"))
   template.todayAtt = getDataValues(STUDENT_INFO, "C:E");
@@ -35,7 +52,7 @@ function shareAttendanceData(todayPerformance) {
     // check for blanks
     for(var j = 0; j < curStudentValues[0].length; j++) {
       if(curStudentValues[0][j] === "") {
-        errors += 'Empty cell at ' + String.fromCharCode('B'.charCodeAt(0) + j) + i + "\n";
+        errors += 'Empty cell at ' + String.fromCharCode('B'.charCodeAt(0) + j) + i + ". Please fill in this cell.\n";
         valid = false;
       }
     }
@@ -43,7 +60,7 @@ function shareAttendanceData(todayPerformance) {
   }
   
   if(!valid) {
-    MailApp.sendEmail(sheet.getOwner().getEmail(), "Google Sheets Email Forwarding Failed", errors);
+    MailApp.sendEmail(sheet.getOwner().getEmail(), "Attendance Emailer FAILED", errors);
     return null;
   }
 
