@@ -4,6 +4,8 @@
   <body>
     <h1>Google Sheets Email Forwarding</h1>
     <h3 id="todayDate">Today's date: <?= todayDate ?></h3>
+    <!-- Display used to show errors -->
+    <p id='errorText'><b></b></p>
     <!-- Display attendance options for today -->
     <table id='todayAttTable'>
       <? for (var i = 0; i < todayAtt.length; i++) { ?>
@@ -47,9 +49,10 @@
     var checkboxes = document.getElementsByClassName('attCheckbox');
     
     document.getElementById('submitButton').addEventListener('click', function() {
-      //hides the submit button
+      //hides the submit button and the errorText
       document.getElementById('submitButton').style.display = "none";
-      
+      document.getElementById('errorText').style.display = "none";
+
       var todayTable = document.getElementById("todayAttTable");
       var pastTable = document.getElementById("pastAttTable");
 
@@ -64,12 +67,6 @@
       }
       
       function setNewData(returned) {
-        if(returned === null) {
-          // displays the submit button
-          document.getElementById('submitButton').style.display = "block";
-          return;
-        }
-
         var newTodayDate = returned[0];
         var newPastAttData = returned[1];
         var newTodayAttData = returned[2];
@@ -147,7 +144,14 @@
         document.getElementById('submitButton').style.display = "block";
       }
 
-      google.script.run.withSuccessHandler(setNewData).shareAttendanceData(todayPerformance);
+      function onFailure(error) {
+        document.getElementById('errorText').innerText = error.toString();
+        document.getElementById('errorText').style.display = "block";
+        // displays the submit button
+        document.getElementById('submitButton').style.display = "block";
+      }
+
+      google.script.run.withSuccessHandler(setNewData).withFailureHandler(onFailure).shareAttendanceData(todayPerformance);
 
       //clear all checkboxes
       for(var i = 0; i < checkboxes.length; i++) {

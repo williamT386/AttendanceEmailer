@@ -4,8 +4,13 @@
  * @return an HtmlOutput with the information listed above
  */
 function doGet(e) {
+  //make sure all sheets are present
+  if(!allSheetsPresent()) {
+    throw new Error("Not all required sheets are present.");
+  }
+
   var studentInfoSheet = sheet.getSheetByName(STUDENT_INFO);
-  
+
   //sorts by period number
   studentInfoSheet.getRange("A2:E" + studentInfoSheet.getLastRow()).sort(4);
   
@@ -24,8 +29,8 @@ function doGet(e) {
     }
   }
   if(!valid) {
-    MailApp.sendEmail(sheet.getOwner().getEmail(), "Attendance Emailer FAILED", errors);
-    throw new Error("Error loading webpage. Please check your email.");
+    errorEmail("Attendance Emailer FAILED", errors);
+    throw new Error("Error loading data. Please check your email.");
   }
 
   var template = HtmlService.createTemplateFromFile('Index.html');
@@ -42,6 +47,10 @@ function doGet(e) {
  * @return new today's date, the to-append new past attendance data, and the new today attendance data
  */
 function shareAttendanceData(todayPerformance) {
+  if(!allSheetsPresent()) {
+    throw new Error("Not all required sheets are present.");
+  }
+
   //put all studentInfo into an array
   var studentInfoSheet = sheet.getSheetByName(STUDENT_INFO);
   var newTodayAttData = [];
@@ -60,8 +69,8 @@ function shareAttendanceData(todayPerformance) {
   }
   
   if(!valid) {
-    MailApp.sendEmail(sheet.getOwner().getEmail(), "Attendance Emailer FAILED", errors);
-    return null;
+    errorEmail("Attendance Emailer FAILED", errors);
+    throw new Error("Error loading data. Please check your email.");
   }
 
   //set up new time
@@ -131,5 +140,24 @@ function sendEmail(listedDate, curRow) {
 
   var emailHtml = HtmlService.createHtmlOutput("<p>" + message + "<\p>");
   MailApp.sendEmail({to: curRow[3], subject: subject, htmlBody: emailHtml.getContent()});
+}
+
+/**
+ * Sends the error email to the owner of the spreadsheet and everyone listed in the Teacher Email sheet.
+ * @param subject the subject of the email
+ * @param message the message of the email
+ */
+function errorEmail(subject, message) {
+  var allTeachers = new Set();
+  allTeachers.add(sheet.getOwner().getEmail());
+
+  var teacherValues = sheet.getSheetByName(TEACHER_EMAIL).getDataRange().getValues();
+  for(var i = 1; i < teacherValues.length; i++) {
+    allTeachers.add(teacherValues[i][0]);
+  }
+
+  allTeachers.forEach(emailAcc => {
+    MailApp.sendEmail(emailAcc, subject, message);
+  });
 }
 

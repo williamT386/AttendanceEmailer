@@ -1,4 +1,23 @@
 /**
+ * Checks if all required sheets are present
+ * @return true if all required sheets are present, false otherwise
+ */
+function allSheetsPresent() {
+  var mySheets = new Set();
+  var sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  for(var i = 0; i < sheets.length; i++) {
+    mySheets.add(sheets[i].getName());
+  }
+  
+  for(var i = 0; i < ALL_SHEET_NAMES.length; i++) {
+    if(!mySheets.has(ALL_SHEET_NAMES[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Gets data from the spreadsheet
  * @param sheetName the name of the sheet
  * @param range the range to get
