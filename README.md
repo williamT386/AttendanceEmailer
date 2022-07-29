@@ -1,4 +1,4 @@
-# attendance
+# Attendance Emailer
 ## Description
 This project uses Google Sheets and Google Forms to send emails telling students that they were marked absent for a class. 
 
