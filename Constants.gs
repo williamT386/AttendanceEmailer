@@ -9,3 +9,4 @@ const TEACHER_EMAIL = "Teacher Email";
 const ALL_SHEET_NAMES = [STUDENT_INFO, PAST_ATTENDANCE, DATE, TEACHER_EMAIL]
 
 const sheet = SpreadsheetApp.getActiveSpreadsheet();
+

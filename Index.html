@@ -45,8 +45,11 @@
   </body>
   <script>
     var checkboxes = document.getElementsByClassName('attCheckbox');
-
+    
     document.getElementById('submitButton').addEventListener('click', function() {
+      //hides the submit button
+      document.getElementById('submitButton').style.display = "none";
+      
       var todayTable = document.getElementById("todayAttTable");
       var pastTable = document.getElementById("pastAttTable");
 
@@ -61,6 +64,9 @@
       }
       
       function setNewData(returned) {
+        if(returned === null)
+          return;
+
         var newTodayDate = returned[0];
         var newPastAttData = returned[1];
         var newTodayAttData = returned[2];
@@ -86,10 +92,11 @@
         }
 
         //add or remove rows to today's table to match the number of current students
+        //TODO: incorrect algorithm
         var tableSlots = todayTable.rows.length - 1;
         if(newTodayAttData.length < tableSlots) {
-          for(var count = newTodayAttData.length; count < tableSlots; count++) {
-            todayTable.deleteRow(count);
+          for(var deleteIndex = tableSlots - 1; deleteIndex >= newTodayAttData.length; deleteIndex--) {
+            todayTable.deleteRow(deleteIndex);
           }
         }
         else if(newTodayAttData.length > tableSlots) {
@@ -133,9 +140,12 @@
           }
           rowNum++;
         }
+        
+        // displays the submit button
+        document.getElementById('submitButton').style.display = "block";
       }
 
-      google.script.run.withSuccessHandler(setNewData).newWebsiteSendEmails(todayPerformance);
+      google.script.run.withSuccessHandler(setNewData).shareAttendanceData(todayPerformance);
 
       //clear all checkboxes
       for(var i = 0; i < checkboxes.length; i++) {
