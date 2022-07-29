@@ -3,8 +3,8 @@
 This project sends emails telling students that they were marked absent for a class. 
 
 ## Setting up
-- [Google Sheet to copy](https://docs.google.com/spreadsheets/d/1DeQIiDuARJ-xWsqOQHVprYn9PcHL9GPKT5t3831ABv8/edit?usp=sharing)
-- [Google Form to copy](https://docs.google.com/forms/d/1zTRMiGvXKfEUuy783Rc459o5Q65cQXbc0oVfHeJXxZE/edit?usp=sharing)
+- [Google Sheet to copy](https://docs.google.com/spreadsheets/d/1DeQIiDuARJ-xWsqOQHVprYn9PcHL9GPKT5t3831ABv8/copy)
+- [Google Form to copy](https://docs.google.com/forms/d/1zTRMiGvXKfEUuy783Rc459o5Q65cQXbc0oVfHeJXxZE/copy)
 - How to set up the software: **TODO:** add youtube reference video
 - How to use the software: **TODO:** add youtube reference video
 
