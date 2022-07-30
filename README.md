@@ -4,7 +4,7 @@ This project sends emails telling students that they were marked absent for a cl
 
 ## Setting up
 - [Google Sheet to copy](https://docs.google.com/spreadsheets/d/1DeQIiDuARJ-xWsqOQHVprYn9PcHL9GPKT5t3831ABv8/copy)
-- [Google Form to Reference](https://forms.gle/GYksikK1zg6VXFkN8)
+- [Google Form for Reference](https://forms.gle/GYksikK1zg6VXFkN8)
 - How to set up the software: **TODO:** add youtube reference video
 - How to use the software: **TODO:** add youtube reference video
 
