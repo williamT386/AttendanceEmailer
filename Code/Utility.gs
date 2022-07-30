@@ -87,7 +87,8 @@ function deleteBlankRows() {
     var rowClear = false;
     
     // Loop through Rows in this sheet
-    for (var r = 0; r < numRows; r++) {
+    var r = currentSheetName = STUDENT_INFO ? currentSheet.getLastRow() : 0;
+    while(r < numRows) {
       // Loop through columns in this row
       for (var c = 0; c < numCols; c++) {
         if (searchValues[r][c].toString().trim() === "") {
@@ -108,6 +109,7 @@ function deleteBlankRows() {
         }
         prevDelRow = r;
       }
+      r++;
     }
     
     // Delete blank rows in this sheet, if we have rows to delete.
