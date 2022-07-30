@@ -1,6 +1,6 @@
 # Attendance Emailer
 ## Description
-This project sends emails telling students that they were marked absent for a class. 
+This project sends emails telling students that they were marked absent for a class. This project is kept in the PST timezone, so being in a different timezone may cause the dates in the software to change a little earlier or later than your local timezone.
 
 ## Setting up
 - [Google Sheet to copy](https://docs.google.com/spreadsheets/d/1DeQIiDuARJ-xWsqOQHVprYn9PcHL9GPKT5t3831ABv8/copy)
