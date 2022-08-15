@@ -34,7 +34,7 @@ function doGet(e) {
   }
 
   var template = HtmlService.createTemplateFromFile('Index.html');
-  template.todayDate = formatDate(getDataValue(DATE, "A1"))
+  template.todayDate = formatDate(getDataValue(DATE, "A1"));
   template.todayAtt = getDataValues(STUDENT_INFO, "C:E");
   template.pastAtt = getData(PAST_ATTENDANCE, "A:E").getDisplayValues();
 
@@ -44,9 +44,10 @@ function doGet(e) {
 /**
  * Receives information about today's performance and updates the Past Attendance sheet.
  * @param todayPerformance the attendance performance for today
+ * @param emailMessage the email message to use 
  * @return new today's date, the to-append new past attendance data, and the new today attendance data
  */
-function shareAttendanceData(todayPerformance) {
+function shareAttendanceData(todayPerformance, emailMessage) {
   if(!allSheetsPresent()) {
     throw new Error("Not all required sheets are present.");
   }
@@ -75,12 +76,9 @@ function shareAttendanceData(todayPerformance) {
 
   //set up new time
   var listedDate = getDataValue(DATE, "A1");
-  var newDate = formatDate(addTime(formatDate(listedDate)));
-  getData(DATE, "A1").setValue(newDate);
   //add to the past attendance table
   var pastAttSheet = sheet.getSheetByName(PAST_ATTENDANCE);
   var rowMoveTo = pastAttSheet.getMaxRows() + 1;
-  // var absenteeIndex = 0;
   var newPastAttData = [];
   for(var i = 0; i < newTodayAttData.length; i++) {
     var curRow = newTodayAttData[i];
@@ -91,12 +89,12 @@ function shareAttendanceData(todayPerformance) {
         rowMoveTo++;
         
         if(curAbsenteeRow[3])
-          sendEmail(listedDate, curRow);
+          sendEmail(listedDate, curRow, emailMessage);
       }
     }
   }
 
-  var toReturn = [newDate, newPastAttData, newTodayAttData];
+  var toReturn = [newPastAttData, newTodayAttData];
   return toReturn;
 }
 
@@ -132,11 +130,14 @@ function moveData(rowMoveTo, listedDate, curRow, curAbsenteeRow) {
  * Sends an email to a student telling them they were absent
  * @param listedDate the date they were absent
  * @param curRow the row showing the data for that student
+ * @param emailMessage the email message to use 
  */
-function sendEmail(listedDate, curRow) {
+function sendEmail(listedDate, curRow, message) {
   listedDate = formatDate(listedDate);
-  var subject = curRow[0] + ": Your Attendance in " + curRow[2] + " P" + curRow[1];
-  var message = "You were marked absent today, " + listedDate + ", in " + curRow[2] + " P" + curRow[1] + ".";
+  var subject = listedDate + ": " + curRow[0] + "-Your Attendance in " + curRow[2] + " P" + curRow[1];
+  if(message == null) {
+    message = "You were marked absent today, " + listedDate + ", in " + curRow[2] + " P" + curRow[1] + ".";
+  }
 
   var emailHtml = HtmlService.createHtmlOutput("<p>" + message + "<\p>");
   MailApp.sendEmail({to: curRow[3], subject: subject, htmlBody: emailHtml.getContent()});

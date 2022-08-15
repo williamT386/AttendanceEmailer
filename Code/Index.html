@@ -4,6 +4,7 @@
   <body>
     <h1>Google Sheets Email Forwarding</h1>
     <h3 id="todayDate">Today's date: <?= todayDate ?></h3>
+    
     <!-- Display used to show errors -->
     <p id='errorText'><b></b></p>
     <!-- Display attendance options for today -->
@@ -26,8 +27,18 @@
         </tr>
       <? } ?>
     </table>
-
+    
+    <button id="saveButton">Save</button>
     <button id="submitButton">Submit</button>
+    <button id="incrementDateButton">Increment Date</button>
+    <h3 id="sureLabel">Are you sure?</h3>
+    <button id="sureDateButton">Yes</button> 
+
+    <label id="labelTextArea" for="emailMessageTextArea">Email Message to send to Absent Students:</label>
+    <textarea id="emailMessageTextArea" name="emailMessageTextArea" rows="10" cols="100"></textarea>
+    <button id="sendEmail">Send Email</button>
+    <button id="useDefaultEmail">Use default email template</button>
+    <button id="cancelEmail">Cancel</button>
 
     <!-- Display previous attendance -->
     <table id='pastAttTable'>
@@ -45,10 +56,54 @@
     </table>
 
   </body>
+  
   <script>
     var checkboxes = document.getElementsByClassName('attCheckbox');
-    
+    function hideIncrementTags() {
+      document.getElementById('sureLabel').style.display = "none";
+      document.getElementById('sureDateButton').style.display = "none";
+    }
+    hideIncrementTags();
+
+    function hideEmailTags() {
+      document.getElementById('labelTextArea').style.display = "none";
+      document.getElementById('emailMessageTextArea').style.display = "none";
+      document.getElementById('sendEmail').style.display = "none";
+      document.getElementById('useDefaultEmail').style.display = "none";
+      document.getElementById('cancelEmail').style.display = "none";
+    }
+    hideEmailTags();
+
+    document.getElementById('incrementDateButton').addEventListener('click', function() {
+      document.getElementById('sureLabel').style.display = "block";
+      document.getElementById('sureDateButton').style.display = "block";
+      hideEmailTags();
+    });
+
+    document.getElementById('sureDateButton').addEventListener('click', function() {
+      hideIncrementTags();
+      
+      function changeDate(newDate) {
+        document.getElementById('todayDate').innerText = "Today's date: " + newDate;
+      }
+      google.script.run.withSuccessHandler(changeDate).getNewDate();
+    });
+
     document.getElementById('submitButton').addEventListener('click', function() {
+      document.getElementById('labelTextArea').style.display = "block";
+      document.getElementById('emailMessageTextArea').style.display = "block";
+      document.getElementById('sendEmail').style.display = "block";
+      document.getElementById('useDefaultEmail').style.display = "block";
+      document.getElementById('cancelEmail').style.display = "block";
+      hideIncrementTags();
+    });
+
+    document.getElementById('cancelEmail').addEventListener('click', function() {
+      hideEmailTags();
+    });
+
+    function submit(emailMessage = null) {
+      hideEmailTags();
       //hides the submit button and the errorText
       document.getElementById('submitButton').style.display = "none";
       document.getElementById('errorText').style.display = "none";
@@ -67,12 +122,8 @@
       }
       
       function setNewData(returned) {
-        var newTodayDate = returned[0];
-        var newPastAttData = returned[1];
-        var newTodayAttData = returned[2];
-        var todayDate = document.getElementById("todayDate");
-        //set the new date for today
-        todayDate.innerText = "Today's date: " + newTodayDate;
+        var newPastAttData = returned[0];
+        var newTodayAttData = returned[1];
 
         //append the new attendance data to the past attendance table
         for(var i = 0; i < newPastAttData.length; i++) {
@@ -151,12 +202,20 @@
         document.getElementById('submitButton').style.display = "block";
       }
 
-      google.script.run.withSuccessHandler(setNewData).withFailureHandler(onFailure).shareAttendanceData(todayPerformance);
+      google.script.run.withSuccessHandler(setNewData).withFailureHandler(onFailure).shareAttendanceData(todayPerformance, emailMessage);
 
       //clear all checkboxes
       for(var i = 0; i < checkboxes.length; i++) {
         checkboxes[i].checked = false;
       }
+    }
+
+    document.getElementById('sendEmail').addEventListener('click', function() {
+      submit(document.getElementById('emailMessageTextArea').value);
+    });
+
+    document.getElementById('useDefaultEmail').addEventListener('click', function() {
+      submit();
     });
   </script>
 </html>
