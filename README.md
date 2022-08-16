@@ -19,4 +19,4 @@ All contributions are welcome. Before any actions are taken, however, please let
 - Right now, there is a save button, but there is no load feature to automatically check the people who were absent according to the saved data. There is a way to do this by hashing everyone who was absent according to the saved data, and then checking each person in the table to see if they are in that hash (and was therefore absent). Unfortunately, I am unable to make hashing work by trying to hash the 3 parameters of {Name, Period, Class Name} without turning it into an object. Hashing with objects doesn't work, since their addresses are being compared instead of their contents. Any work on this is greatly appreciated.
 
 ## Thanks To
-This project was developed by William Tang as a gift for his AP Physics 1 and AP Chemistry teacher to massively reduce time spent emailing students that they were marked absent. Anyone is free to use this software. 
+This project was developed by William Tang as a gift for his AP Physics 1/AP Chemistry teacher to massively reduce time spent emailing students that they were marked absent. Anyone is free to use this software. 
