@@ -127,6 +127,7 @@
             document.getElementById('todayDate').innerText, todayPerformance);
       }
       else {
+        google.script.run.clearSavedAttendanceData();
         displaySaveButton();
       }
     });
