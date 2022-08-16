@@ -162,3 +162,26 @@ function errorEmail(subject, message) {
   });
 }
 
+function saveAttendanceData(todayDate, todayPerformance) {
+  clearSavedAttendanceData();
+
+  for(var row = 0; row < todayPerformance.length; row++) {
+    getData(SAVED_DATA, "A1").setValue(todayDate);
+
+    var range = getData(SAVED_DATA, "A" + (row + 3) + ":D" + (row + 3));
+    var values = range.getValues();
+    for(var col = 0; col < todayPerformance[row].length; col++) {
+      values[0][col] = todayPerformance[row][col];
+    }
+    range.setValues(values);
+  }
+}
+
+function clearSavedAttendanceData() {
+  var lastRow = sheet.getSheetByName(SAVED_DATA).getLastRow();
+  if(lastRow >= 3) {
+    var range = getData(SAVED_DATA, "A" + 3 + ":D" + sheet.getSheetByName(SAVED_DATA).getLastRow());
+    range.clear();
+  }
+}
+

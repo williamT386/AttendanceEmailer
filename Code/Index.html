@@ -56,7 +56,7 @@
     </table>
 
   </body>
-  
+
   <script>
     var checkboxes = document.getElementsByClassName('attCheckbox');
     function hideIncrementTags() {
@@ -74,7 +74,7 @@
     }
     hideEmailTags();
 
-    document.getElementById('incrementDateButton').addEventListener('click', function() {
+    document.getElementById('incrementDateButton').addEventListener('click', function() {      
       document.getElementById('sureLabel').style.display = "block";
       document.getElementById('sureDateButton').style.display = "block";
       hideEmailTags();
@@ -100,6 +100,35 @@
 
     document.getElementById('cancelEmail').addEventListener('click', function() {
       hideEmailTags();
+    });
+
+    document.getElementById('saveButton').addEventListener('click', function() {
+      document.getElementById('saveButton').style.display = "none";
+      
+      //store attendance info for absent students
+      var todayTable = document.getElementById("todayAttTable");
+      const NAME_COL = 0;
+      const PERIOD_COL = 1;
+      const CLASS_NAME_COL = 2;
+      var todayPerformance = [];
+      for(var i = 0; i < checkboxes.length; i++) {
+        var row = todayTable.rows[i + 1];
+        if(checkboxes[i].checked) {
+          todayPerformance.push([row.cells[NAME_COL].innerText, row.cells[PERIOD_COL].innerText, row.cells[CLASS_NAME_COL].innerText, true]);
+        }
+      }
+
+      function displaySaveButton() {
+        document.getElementById('saveButton').style.display = "block";
+      }
+
+      if(todayPerformance.length > 0) {
+        google.script.run.withSuccessHandler(displaySaveButton).withFailureHandler(displaySaveButton).saveAttendanceData(
+            document.getElementById('todayDate').innerText, todayPerformance);
+      }
+      else {
+        displaySaveButton();
+      }
     });
 
     function submit(emailMessage = null) {
@@ -203,6 +232,7 @@
       }
 
       google.script.run.withSuccessHandler(setNewData).withFailureHandler(onFailure).shareAttendanceData(todayPerformance, emailMessage);
+      google.script.run.clearSavedAttendanceData();
 
       //clear all checkboxes
       for(var i = 0; i < checkboxes.length; i++) {
@@ -211,7 +241,10 @@
     }
 
     document.getElementById('sendEmail').addEventListener('click', function() {
-      submit(document.getElementById('emailMessageTextArea').value);
+      var emailMessage = document.getElementById('emailMessageTextArea').value;
+      emailMessage = emailMessage.replace(/\n/g, "<br>\n");
+
+      submit(emailMessage);
     });
 
     document.getElementById('useDefaultEmail').addEventListener('click', function() {
