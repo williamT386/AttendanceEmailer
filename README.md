@@ -8,6 +8,7 @@ This project sends emails telling students that they were marked absent for a cl
 - [How to set up the software](https://youtu.be/Us5RIBwkItQ)
 - [How to "deploy" the software](https://youtu.be/7C9vWFP1pbc)
 - [How to use the software](https://youtu.be/dlnur1X9j2Q)
+
 The web application will become very slow if too many past attendance data is logged (check out the sheet called "Past Attendance"). Please regularly clear this sheet out by deleting earlier rows (but not the top-most row).
 
 ## Development Information
